@@ -48,7 +48,6 @@ class WebAssistant:
     def listen(self):
         """Function to listen to user's voice"""
         try:
-
             with sr.Microphone() as source:
                 print("Listening...")
                 self.recognizer.adjust_for_ambient_noise(source)
@@ -188,6 +187,32 @@ class WebAssistant:
             self.google_search(query)
             print(f"Information retrieval error: {e}")
 
+    def get_news(self):
+        """Fetch top headlines from a news website using BeautifulSoup"""
+        try:
+            # BBC News as example (use a site that allows scraping or has an API)
+            url = "https://www.bbc.com/news"
+            headers = {'User-Agent': 'Mozilla/5.0'}  # To avoid bot detection
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Find headline elements (adjust selector based on site structure)
+            headlines = soup.find_all('h3', class_=re.compile('gs-c-promo-heading__title'), limit=3)
+            
+            if headlines:
+                self.speak("Here are the top news headlines:")
+                for i, headline in enumerate(headlines, 1):
+                    title = re.sub(r'\s+', ' ', headline.text.strip())  # Clean text with regex
+                    self.speak(f"Headline {i}: {title}")
+            else:
+                self.speak("I couldn't find any headlines right now.")
+                
+        except Exception as e:
+            self.speak("Sorry, I couldn't fetch the news. Let me search for news instead.")
+            self.google_search("latest news")
+            print(f"News scraping error: {e}")
+
     def chat(self, message):
         """Function to respond to basic chat messages and questions"""
         message = message.lower()
@@ -224,69 +249,68 @@ class WebAssistant:
             self.speak("Try again with a different command or question.")
 
     def process_command(self, command):
-        """Process the user's command"""
+        """Process the user's command with regex for better parsing"""
         if not command:
             return
             
         command = command.lower()
         
-        # Website commands
-        if "open" in command:
-            if "website" in command:
-                site = command.split("open")[1].split("website")[0].strip()
-            else:
-                # Extract what's after "open"
-                site = command.split("open")[1].strip()
+        # Regex patterns for parsing
+        website_pattern = r'open\s+(?:the\s+)?(?:website\s+)?([\w\.-]+)'  # Matches "open google.com", "open the website youtube.com"
+        song_pattern = r'play\s+(?:a\s+)?(?:song\s+)?(.+?)(?:\s+on\s+youtube)?$'  # Matches "play despacito", "play a song called shape of you"
+        news_pattern = r'(?:get|tell me|what\'?s)\s+(?:the\s+)?news'  # Matches "get news", "what's the news"
+        weather_pattern = r'weather\s+(?:in\s+)?(.+)'  # Matches "weather in London", "weather New York"
+        search_pattern = r'(?:search|google)\s+(?:for\s+)?(.+)'  # Matches "search for Python", "google Python tutorials"
+        
+        # News command
+        if re.search(news_pattern, command):
+            self.get_news()
+            return
+        
+        # Website command
+        website_match = re.search(website_pattern, command)
+        if website_match:
+            site = website_match.group(1).strip()
             self.open_website(site)
+            return
             
-        elif "close" in command and ("website" in command or "tab" in command or "page" in command):
-            self.close_current_tab()
-        
-        # YouTube commands    
-        elif "play" in command:
-            if "youtube" in command:
-                song = command.replace("play", "").replace("on youtube", "").strip()
-            elif "song" in command:
-                song = command.replace("play", "").replace("song", "").strip()
-            else:
-                song = command.replace("play", "").strip()
+        # YouTube song command
+        song_match = re.search(song_pattern, command)
+        if song_match:
+            song = song_match.group(1).strip()
+            self.speak(f"Playing {song} on YouTube")
             self.play_youtube_song(song)
+            return
         
-        # Google search commands    
-        elif "search" in command or "google" in command:
-            # Extract search query
-            query = command
-            if "search" in query:
-                query = query.replace("search", "")
-            if "google" in query:
-                query = query.replace("google", "")
-            if "for" in query:
-                query = query.replace("for", "")
-            if "on" in query:
-                query = query.replace("on", "")
-            query = query.strip()
+        # Weather command
+        weather_match = re.search(weather_pattern, command)
+        if weather_match:
+            city = weather_match.group(1).strip()
+            self.get_weather(city)
+            return
+        
+        # Search command
+        search_match = re.search(search_pattern, command)
+        if search_match:
+            query = re.sub(r'\s+', ' ', search_match.group(1).strip())  # Clean extra spaces
             self.google_search(query)
+            return
         
-        # Date and time commands    
-        elif any(word in command for word in ["date", "time", "day", "today"]):
+        # Other existing commands
+        if "close" in command and ("website" in command or "tab" in command or "page" in command):
+            self.close_current_tab()
+            return
+        
+        if any(word in command for word in ["date", "time", "day", "today"]):
             self.get_date_time()
+            return
         
-        # Weather commands    
-        elif "weather" in command:
-            # Extract city name
-            if "in" in command:
-                city = command.split("in")[1].strip()
-                self.get_weather(city)
-            else:
-                self.speak("Please specify a city for weather information")
-        
-        # Information questions
-        elif any(phrase in command for phrase in ["what is", "who is", "tell me about"]):
+        if any(phrase in command for phrase in ["what is", "who is", "tell me about"]):
             self.get_information(command)
-                
-        else:
-            # Treat as chat
-            self.chat(command)
+            return
+        
+        # Default to chat
+        self.chat(command)
 
     def run(self):
         """Main function to run the assistant"""
