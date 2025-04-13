@@ -14,8 +14,8 @@ Jarvis AI is a Python-based virtual assistant designed to perform various tasks 
 
 1. Clone the repository:
 
-   ```opne vs code terminal
-
+   ```copy this url and opne vs code click on terminal and paste this url
+      https://github.com/aashuprogrammer/jarvis-AI.git
    ```
 
 2. Install dependencies:
