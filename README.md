@@ -35,7 +35,10 @@ Jarvis AI is a Python-based virtual assistant designed to perform various tasks 
 - Example commands:
   - "Open Google Chrome."
   - "What's the weather today?"
-  - "Send an email to John."
+  - "What's the correct time"
+  - "Play song on youtube.com"
+  - "Opne any web pages"
+  - "Search on wikipedia"
 
 ## Acknowledgments
 
