@@ -160,7 +160,7 @@ class WebAssistant:
         """Get information about a topic using Wikipedia"""
         try:
             # Clean up the query
-            query = query.replace("what is", "").replace("who is", "").replace("tell me about", "").strip()
+            query = query.replace("what is", "").replace("who is", "").replace("tell me about", "").replace("how to", "").strip()
             
             # Search Wikipedia
             result = wikipedia.summary(query, sentences=2)
