@@ -18,10 +18,10 @@ Jarvis AI is a Python-based virtual assistant designed to perform various tasks 
       https://github.com/aashuprogrammer/jarvis-AI.git
    ```
 
-2. Install dependencies:
+2. Install dependencies run requirements.txt file:
 
    ```bash
-   pip install speechrecognition pyttsx3 requests beautifulsoup4 wikipedia pyautogui
+   pip install -r .\requirements.txt
    ```
 
 3. Run the application:
